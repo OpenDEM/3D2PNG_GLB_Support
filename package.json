@@ -1,0 +1,57 @@
+{
+  "license": "MIT",
+  "bin": {
+    "3d2png": "./3d2png.js"
+  },
+  "maintainers": [
+    {
+      "email": "gilles@wikimedia.org",
+      "name": "Gilles Dubuc"
+    }
+  ],
+  "name": "3d2png",
+  "type": "module",
+  "dependencies": {
+    "canvas": "2.11.2",
+    "gl": "5.0.3",
+    "three": "^0.162.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "image-ms-ssim": "latest",
+    "mocha": "latest",
+    "pngjs": "latest",
+    "service-runner": "latest",
+    "uuid": "latest"
+  },
+  "readme": "Converts STL files into PNG thumbnails",
+  "repository": {
+    "type": "git",
+    "url": "https://phabricator.wikimedia.org/diffusion/TDTP/3d2png.git"
+  },
+  "scripts": {
+    "test": "if test `uname -s` = 'Linux'; then xvfb-run -a -s '-ac -screen 0 1280x1024x24' node node_modules/mocha/bin/mocha; else node node_modules/mocha/bin/mocha; fi",
+    "build-deploy": "node node_modules/service-runner/service-runner build --deploy-repo --force --verbose"
+  },
+  "deploy": {
+    "target": "debian:bullseye",
+    "dependencies": {
+      "three": "^0.162.0",
+      "debian": [
+        "pkg-config",
+        "libcairo2-dev",
+        "libjpeg-dev",
+        "libxi-dev",
+        "libgif-dev",
+        "libglu1-mesa-dev",
+        "libglew-dev",
+        "libpng-dev",
+        "xvfb",
+        "xauth",
+        "libgl1-mesa-dri",
+        "libgl1-mesa-glx"
+      ]
+    }
+  },
+  "version": "0.0.2"
+}
