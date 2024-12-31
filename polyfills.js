@@ -1,12 +1,25 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { createCanvas } = require('canvas');
+const { createCanvas, Image } = require('canvas');
+const { URL } = require('url');
+import * as THREE from 'three';
+
+
+// Create global self if it doesn't exist
+if (typeof self === 'undefined') {
+    global.self = globalThis;
+}
+
+// Add Image to global scope
+if (typeof global.Image === 'undefined') {
+    global.Image = Image;
+}
 
 function TextDecoder(encoding, options) {
     this.encoding = encoding || 'utf-8';
 }
 
-TextDecoder.prototype.decode = function(buffer) {
+TextDecoder.prototype.decode = function (buffer) {
     return new Buffer(buffer).toString(this.encoding);
 }
 
@@ -14,12 +27,12 @@ TextDecoder.prototype.decode = function(buffer) {
 function addCanvasEventListener() {
     const canvas = createCanvas(1, 1);
     if (!canvas.addEventListener) {
-        canvas.addEventListener = function(type, listener) {
+        canvas.addEventListener = function (type, listener) {
             // Stub implementation
         };
     }
     if (!canvas.removeEventListener) {
-        canvas.removeEventListener = function(type, listener) {
+        canvas.removeEventListener = function (type, listener) {
             // Stub implementation
         };
     }
@@ -28,25 +41,35 @@ function addCanvasEventListener() {
 
 const polyfills = {
     window: {
-        addEventListener: function(eventName, callback) {
+        addEventListener: function (eventName, callback) {
             // dummy
         },
-        removeEventListener: function(eventName, callback) {
+        removeEventListener: function (eventName, callback) {
             // dummy
         },
-        TextDecoder: TextDecoder
+        TextDecoder: TextDecoder,
+        Image: Image  // Add Image to window
     },
     TextDecoder: TextDecoder,
-    // Add canvas event methods to prototype
     HTMLCanvasElement: {
         prototype: {
-            addEventListener: function(type, listener) {
+            addEventListener: function (type, listener) {
                 // Stub implementation
             },
-            removeEventListener: function(type, listener) {
+            removeEventListener: function (type, listener) {
                 // Stub implementation
             }
         }
+    },
+    URL: URL,
+    Image: Image,  // Add Image to polyfills
+    createImageBitmap: async function (data) {
+        const img = new Image();
+        return new Promise((resolve, reject) => {
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = data;
+        });
     }
 };
 
