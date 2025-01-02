@@ -15,9 +15,11 @@ import { createRequire } from 'module';
 import fs from 'fs';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import polyfills from './polyfills.js';
+import { PMREMGenerator } from './PMREMGenerator.js';
 
 // Setup require for packages that don't support ESM
 const require = createRequire(import.meta.url);
@@ -74,16 +76,21 @@ function ThreeDtoPNG(width, height) {
     });
 
     // RoomEnvironment not possible with headless GL
-    //const environment = new THREE.RoomEnvironment( this.renderer );
-    //const pmremGenerator = new THREE.PMREMGenerator( this.renderer );
+    const environment = new RoomEnvironment( this.renderer );
+    const pmremGenerator = new PMREMGenerator( this.renderer );
+
     this.scene = new THREE.Scene();
+    this.scene.environment = pmremGenerator.fromScene( environment ).texture;
+
+    environment.dispose();
+    pmremGenerator.dispose();
 
 }
 
 
 
 /**
- * Sets up the Three environment (ambient light, camera, renderer)
+ * Sets up the Three environment (camera, renderer)
  */
 ThreeDtoPNG.prototype.setupEnvironment = function () {
 
@@ -103,25 +110,7 @@ ThreeDtoPNG.prototype.setupEnvironment = function () {
     this.renderer.setSize(this.width, this.height, false);
     this.renderer.shadowMap.enabled = true;
 
-    this.camera.add(new THREE.PointLight(0xffffff, 0.3));
-
-    this.scene.add(new THREE.AmbientLight(0x666666, 0.5));
     this.scene.add(this.camera);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    directionalLight.position.set(-100, 50, 25);
-    directionalLight.castShadow = true;
-    this.scene.add(directionalLight);
-
-    // old with sportlight
-    /*
-    light = new THREE.SpotLight( 0x999999, 1 );
-    light.position.set( -100, 50, 25 );
-    light.castShadow = true;
-    light.shadow.mapSize.width = 4096;
-    light.shadow.mapSize.height = 4096;
-    this.camera.add( light );
-    */
 
     this.render();
 };
@@ -132,9 +121,10 @@ ThreeDtoPNG.prototype.setupEnvironment = function () {
  * @returns {THREE.Mesh} mesh
  */
 ThreeDtoPNG.prototype.outputToObject = function (geometry) {
-    var material = new THREE.MeshPhongMaterial({
+    var material = new THREE.MeshStandardMaterial({
         color: 0xf0ebe8,
-        shininess: 5,
+        roughness: 1,
+        metalness: 0,
         flatShading: true,
         side: THREE.DoubleSide,
         shadowSide: THREE.BackSide // for better shadow handling
@@ -445,14 +435,6 @@ ThreeDtoPNG.prototype.addDataToSceneGLB = function (loader, data, destinationPat
     // Log the structure before parsing
     console.log('\nAnalyzing GLB structure:');
     parseGLBStructure(arrayBuffer);
-
-    // Add lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-    self.scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    directionalLight.position.set(-100, 50, 25);
-    directionalLight.castShadow = true;
-    self.scene.add(directionalLight);
 
     loader.parse(arrayBuffer, '', function (gltf) {
         console.log('after parse, THREE.GLTFLoader: Couldn\'t load texture blob:nodedata:... ');
